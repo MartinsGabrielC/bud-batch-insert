@@ -11,6 +11,7 @@ from Util.PasswordUtil import get_strong_password
 from auth0.v3.management import Auth0
 from auth0.v3.authentication import GetToken
 from auth0.v3.exceptions import Auth0Error
+from urllib3.exceptions import NewConnectionError
 from tqdm import tqdm
 import psycopg2
 from psycopg2.errors import UniqueViolation
@@ -23,11 +24,12 @@ import threading
 def connect(config):
     """ 
     Connect to the PostgreSQL database server and return connection
-    
+    -------
     Parameters
-    ----------
+    -------
     config: dict
         Contains environment configuration
+    -------
     Returns
     -------
     conn
@@ -210,8 +212,38 @@ def load_user_to_authz(config, user):
         f.write("AUTH0: User {} already exists\n".format(user.get_email()))
         f.close()
         return ""
+    except (ConnectionError, NewConnectionError):
+        raise Exception("AUTH0: Error - Host is unavailable")
+
+def send_confirmation_email_authz(config, user):
+    domain = config["AUTHZ_DOMAIN"]
+    non_interactive_client_id = config["AUTHZ_CLIENT_ID"]
+    non_interactive_client_secret = config["AUTHZ_CLIENT_SECRET"]
+    get_token = GetToken(domain)
+    try:
+        token = get_token.client_credentials(non_interactive_client_id,
+            non_interactive_client_secret, 'https://{}/api/v2/'.format(domain))
+        mgmt_api_token = token['access_token']
     except ConnectionError:
         raise Exception("AUTH0: Error - Host is unavailable")
+    auth0 = Auth0(domain, mgmt_api_token)
+    secure_password = get_strong_password()
+
+    conn = connect(config)
+
+    sql = """ select authz_sub from public."user" where email=%s limit 1;"""
+    cur = conn.cursor()
+    email = user.get_email()
+    print(email)
+    cur.execute(sql, (email, ))
+    result = cur.fetchone()
+    print(result[0])
+    body = {
+    "user_id": result[0]
+    }
+    cur.close()
+    conn.close()
+    #auth0.jobs.send_verification_email(body)
     
 def load_users_to_database(config, users):
     conn = connect(config)
@@ -299,3 +331,7 @@ def load_to_database(config, data):
     load_cycle_to_database(config, tqdm(data[CYCLE_TAB], desc="CYCLES", bar_format="{desc:<15}{percentage:3.0f}%|{bar}{r_bar}"))
     load_objective_to_database(config, tqdm(data[OBJECTIVE_TAB], desc="OBJECTIVES", bar_format="{desc:<15}{percentage:3.0f}%|{bar}{r_bar}"))
     load_key_result_to_database(config, tqdm(data[KEY_RESULTS_TAB], desc="KEY RESULTS", bar_format="{desc:<15}{percentage:3.0f}%|{bar}{r_bar}"))
+
+def verificate_users(config, users):
+    for user in tqdm(users, desc="USERS", bar_format="{desc:<15}{percentage:3.0f}%|{bar}{r_bar}"):
+        send_confirmation_email_authz(config, user)
