@@ -41,12 +41,14 @@ def connect(config):
     port = config["POSTGRES_PORT"]
     database = config["POSTGRES_DB"]
     user = config["POSTGRES_USER"]
-    password = config["POSTGRES_PASSWORD"]
+    try:
+        password = config["POSTGRES_PASSWORD"]
+    except KeyError:
+        pass
 
     try:
         region = config["AWS_REGION"]
-        session = boto3.Session(profile_name=config["AWS_PROFILE"])
-        client = session.client('rds',
+        client = boto3.client('rds',
                                 aws_access_key_id=config["AWS_CREDENTIALS_ACCESS_KEY_ID"],
                                 aws_secret_access_key=config["AWS_CREDENTIALS_SECRET_ACCESS_KEY"])
         password = client.generate_db_auth_token(DBHostname=host, Port=port, DBUsername=user, Region=region)
