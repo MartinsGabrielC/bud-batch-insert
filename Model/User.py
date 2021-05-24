@@ -38,14 +38,14 @@ class User:
 	def get_linked_in_profile_address(self):
 		return self.linked_in_profile_address
 
-	def get_about(self):
-		return self.about
+	def get_role(self):
+		return self.role
 
 	def get_email(self):
 		return self.email
 
-	def get_role(self):
-		return self.role
+	def get_part(self):
+		return self.part
 
 	def get_picture(self):
 		return self.picture

@@ -208,11 +208,14 @@ def load_user_to_authz(config, user):
         body["picture"] =  user.get_picture()
     try:
         auth0user = auth0.users.create(body)
+        role_id = [item["id"] for item in auth0.roles.list()["roles"] if item["name"] == user.get_part()]
+        auth0.users.add_roles(auth0user["user_id"], role_id)
         return auth0user["user_id"]
-    except Auth0Error:
+    except Auth0Error as e:
         f = open(config["LOGFILE"], "a")
-        f.write("AUTH0: User {} already exists\n".format(user.get_email()))
+        f.write("AUTH0: Error creating user {} \n".format(user.get_email()))
         f.close()
+        raise("AUTH0: Error creating user {}".format(user.get_email()))
         return ""
     except (ConnectionError, NewConnectionError):
         raise Exception("AUTH0: Error - Host is unavailable")
