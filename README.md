@@ -4,7 +4,11 @@
 To install python required libraries:
 ```
 pip install -r requirements.txt
-```
+```  
+
+Create "fileInput" folder where you will place the excel file to be loaded
+
+Create "logs" folder where logs of the execution will be places with timestamp
 ### Environment Variables:
 
 ```bash

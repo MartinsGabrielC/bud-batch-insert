@@ -249,8 +249,8 @@ def send_confirmation_email_authz(config, user):
     
 def load_users_to_database(config, users):
     conn = connect(config)
-    sql = """ INSERT INTO public."user"(first_name, last_name, nickname, linked_in_profile_address, about, email, role, picture, gender, authz_sub)
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id;"""
+    sql = """ INSERT INTO public."user"(first_name, last_name, nickname, linked_in_profile_address, role, email, picture, gender, authz_sub)
+            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id;"""
     cur = conn.cursor()
     for user in users:
         userid = load_user_to_authz(config, user)
