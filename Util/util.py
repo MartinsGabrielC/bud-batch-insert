@@ -12,6 +12,7 @@ from auth0.v3.management import Auth0
 from auth0.v3.authentication import GetToken
 from auth0.v3.exceptions import Auth0Error
 from urllib3.exceptions import NewConnectionError
+from time import sleep
 from tqdm import tqdm
 import psycopg2
 from psycopg2.errors import UniqueViolation
@@ -207,6 +208,7 @@ def load_user_to_authz(config, user):
     if user.get_picture() != "":
         body["picture"] =  user.get_picture()
     try:
+        sleep(1)
         auth0user = auth0.users.create(body)
         role_id = [item["id"] for item in auth0.roles.list()["roles"] if item["name"] == user.get_part()]
         auth0.users.add_roles(auth0user["user_id"], role_id)
